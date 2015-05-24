@@ -1,43 +1,43 @@
 {
     "domains": {
-        "core": {
-            "schema_name": "core", 
+        "bits": {
+            "schema_name": "bits", 
             "types": {
-                "salutation": {        
+                "salutation": {
                     "properties": {
                         "kp_SalutationID": {
-                            "column_name": "kp_SalutationID", 
-                            "nullable": false, 
+                            "column_name": "kp_SalutationID",
+                            "nullable": false,
                             "type": "/type/int"
-                        },                                
+                        },
                         "SalutationAbbreviation": {
-                            "column_name": "SalutationAbbreviation", 
-                            "nullable": false, 
+                            "column_name": "SalutationAbbreviation",
+                            "nullable": false,
                             "type": "/type/text"
                         }
-                    }, 
+                    },
                     "table_name": "tbl_salutation",
                     "keys": {
                         "PRIMARY": {
                             "type": "PRIMARY KEY",
                             "columns": ["kp_SalutationID"]
                         }
-                    }     
-                },			
+                    }
+                },
                 "person": {
                     "properties": {
                         "kp_PersonID": {
-                            "column_name": "kp_PersonID", 
-                            "nullable": false, 
+                            "column_name": "kp_PersonID",
+                            "nullable": false,
                             "type": "/type/int"
                         },
                         "kf_SalutationID": {
-                            "column_name": "kf_SalutationID", 
+                            "column_name": "kf_SalutationID",
                             "nullable": true,
                             "type": "/type/int"
                         },
                         "kf_GenderID": {
-                            "column_name": "kf_GenderID", 
+                            "column_name": "kf_GenderID",
                             "nullable": true,
                             "type": "/type/int"
                         },
@@ -53,16 +53,16 @@
                             "nullable": true
                         },
                         "PersonFirstName": {
-                            "column_name": "PersonFirstName", 
-                            "nullable": false, 
+                            "column_name": "PersonFirstName",
+                            "nullable": false,
                             "type": "/type/text"
                         },
                         "PersonLastName": {
-                            "column_name": "PersonLastName", 
-                            "nullable": false, 
+                            "column_name": "PersonLastName",
+                            "nullable": false,
                             "type": "/type/text"
                         }
-                    }, 
+                    },
                     "table_name": "tbl_person",
                     "keys": {
                         "PRIMARY": {
@@ -71,92 +71,92 @@
                         }
                     }
                 },
-                "gender": {        
+                "gender": {
                     "properties": {
                         "kp_GenderID": {
-                            "column_name": "kp_GenderID", 
-                            "nullable": false, 
+                            "column_name": "kp_GenderID",
+                            "nullable": false,
                             "type": "/type/int"
-                        },                                
+                        },
                         "GenderName": {
-                            "column_name": "GenderName", 
-                            "nullable": false, 
+                            "column_name": "GenderName",
+                            "nullable": false,
                             "type": "/type/text"
                         }
-                    }, 
+                    },
                     "table_name": "tbl_gender",
                     "keys": {
                         "PRIMARY": {
                             "type": "PRIMARY KEY",
                             "columns": ["kp_GenderID"]
                         }
-                    }     
+                    }
                 },
-                "nationality": {        
+                "nationality": {
                     "properties": {
                         "kp_NationalityID": {
-                            "column_name": "kp_NationalityID", 
-                            "nullable": false, 
+                            "column_name": "kp_NationalityID",
+                            "nullable": false,
                             "type": "/type/int"
-                        },                                
+                        },
                         "NationalityName": {
-                            "column_name": "NationalityName", 
-                            "nullable": false, 
+                            "column_name": "NationalityName",
+                            "nullable": false,
                             "type": "/type/text"
                         }
-                    }, 
+                    },
                     "table_name": "tbl_nationality",
                     "keys": {
                         "PRIMARY": {
                             "type": "PRIMARY KEY",
                             "columns": ["kp_NationalityID"]
                         }
-                    }     
-                },				
-                "group": {        
+                    }
+                },
+                "group": {
                     "properties": {
                         "kp_GroupID": {
-                            "column_name": "kp_GroupID", 
-                            "nullable": false, 
+                            "column_name": "kp_GroupID",
+                            "nullable": false,
                             "type": "/type/int"
-                        },                                
+                        },
                         "GroupName": {
-                            "column_name": "GroupName", 
-                            "nullable": false, 
+                            "column_name": "GroupName",
+                            "nullable": false,
                             "type": "/type/text"
                         }
-                    }, 
+                    },
                     "table_name": "tbl_group",
                     "keys": {
                         "PRIMARY": {
                             "type": "PRIMARY KEY",
                             "columns": ["kp_GroupID"]
                         }
-                    }     
-                },				
+                    }
+                },
                 "deck": {
                     "properties": {
                         "kp_DeckID": {
-                            "column_name": "kp_DeckID", 
-                            "nullable": false, 
+                            "column_name": "kp_DeckID",
+                            "nullable": false,
                             "type": "/type/int"
                         },
                         "DeckName": {
-                            "column_name": "DeckName", 
-                            "nullable": false, 
+                            "column_name": "DeckName",
+                            "nullable": false,
                             "type": "/type/text"
                         },
                         "DeckDescription": {
-                            "column_name": "DeckDescription", 
-                            "nullable": false, 
+                            "column_name": "DeckDescription",
+                            "nullable": false,
                             "type": "/type/text"
                         },
                         "kf_KindOfDeckID": {
-                            "column_name": "kf_KindOfDeckID", 
+                            "column_name": "kf_KindOfDeckID",
                             "nullable": true,
                             "type": "/type/int"
                         }
-                    }, 
+                    },
                     "table_name": "tbl_deck",
                     "keys": {
                         "PRIMARY": {
@@ -165,11 +165,11 @@
                         }
                     }
                 },
-                "deck_card": {        
+                "deck_card": {
                     "properties": {
                         "kf_DeckID": {
-                            "column_name": "kf_DeckID", 
-                            "nullable": false, 
+                            "column_name": "kf_DeckID",
+                            "nullable": false,
                             "type": "/type/int"
                         },
                         "Deck": {
@@ -182,10 +182,10 @@
                                 }
                             ],
                             "nullable": true
-                        },                                
+                        },
                         "kf_CardID": {
-                            "column_name": "kf_CardId", 
-                            "nullable": false, 
+                            "column_name": "kf_CardId",
+                            "nullable": false,
                             "type": "/type/int"
                         },
                         "Card": {
@@ -198,28 +198,28 @@
                                 }
                             ],
                             "nullable": true
-                        }                                
-                    }, 
-                    "table_name": "tbl_deck_card"     
-                },     
+                        }
+                    },
+                    "table_name": "tbl_deck_card"
+                },
                 "card": {
                     "properties": {
                         "kp_CardID": {
-                            "column_name": "kp_CardID", 
-                            "nullable": false, 
+                            "column_name": "kp_CardID",
+                            "nullable": false,
                             "type": "/type/int"
                         },
                         "CardName": {
-                            "column_name": "CardName", 
-                            "nullable": false, 
+                            "column_name": "CardName",
+                            "nullable": false,
                             "type": "/type/text"
                         },
                         "CardDescription": {
-                            "column_name": "CardDescription", 
-                            "nullable": false, 
+                            "column_name": "CardDescription",
+                            "nullable": false,
                             "type": "/type/text"
                         }
-                    }, 
+                    },
                     "table_name": "tbl_card",
                     "keys": {
                         "PRIMARY": {
@@ -227,7 +227,7 @@
                             "columns": ["kp_CardID"]
                         }
                     }
-                }       
+                }
             }
         }
     }

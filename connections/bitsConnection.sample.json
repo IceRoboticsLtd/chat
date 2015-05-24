@@ -2,7 +2,7 @@
     "connection_config": {
         "driver_options": {}, 
         "dsn": {
-            "db_name": "core", 
+            "db_name": "bits", 
             "db_type": "mysql", 
             "host": "localhost", 
             "port": "3306"

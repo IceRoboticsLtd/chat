@@ -1,41 +1,64 @@
-/*
-The full REST API for this application consists of the following methods:
-
-Method	URL	Action
-GET	/services	Retrieve all services
-GET	/services/5069b47aa892630aae000001	Retrieve the service with the specified _id
-POST	/services	Add a new service
-PUT	/services/5069b47aa892630aae000001	Update service with the specified _id
-DELETE	/services/5069b47aa892630aae000001	Delete the service with the specified _id
+/* CHAT (default port 2xxx)
+* The full REST API for this application consists of the following methods:
+*
+* Method	URL	Action
+* GET	/services	Retrieve all services
+* GET	/services/5069b47aa892630aae000001	Retrieve the service with the specified _id
+* POST	/services	Add a new service
+* PUT	/services/5069b47aa892630aae000001	Update service with the specified _id
+* DELETE	/services/5069b47aa892630aae000001	Delete the service with the specified _id
 */
-
 /**
- * Module dependencies.
- */
+* Module dependencies.
+*/
 var express = require('express'),
-  http = require('http'),
-  path = require('path'),
-  device  = require('../lib/device.js'),
-  redirect = require('express-redirect');
-
+path = require('path'),
+mime = require('mime'),
+fs = require('fs'),
+url = require('url'),
+http = require('http'),
+cors = require('cors'),
+runner = require('child_process'),
+morgan = require('morgan'),
+partials = require('express-partials'),
+device = require('../lib/device.js'),
+hash = require('../lib/pass.js').hash,
+redirect = require('express-redirect'),
+bodyParser = require('body-parser'),
+cookieParser = require('cookie-parser'),
+i18n = require('i18n-2'),
+methodOverride = require('method-override'),
+errorHandler = require('errorhandler'),
+sass = require('node-sass'),
+sassMiddleware = require('node-sass-middleware'),
+session = require('express-session'),
+passport = require('passport'),
+LocalStrategy = require('passport-local').Strategy,
+FacebookStrategy = require('passport-facebook').Strategy;
 /*
- * CONFIGS - The Configurations
- */ 	
-config = require('../configs/server.js');
-var configs = config.configs,
-	server_prefix = configs.server_prefix || 'CHAT';  
-
+* CONFIGS - The Configurations
+*/
+var config = require('../configs/server.js');
+var configs = config.configs;
+var server_prefix = configs.server_prefix || 'CHAT';
 /*
- * SERVICES - The Services
- */ 
+* ROUTER - The Router
+*/
+var router = require('../routers/router.js');
+/*
+* ROUTES - The Routes
+*/
+var routes = require('../routes'); // it seems that we have to start each required file as its own var
+/*
+* SERVICES - The Services
+*/
 var services = require('../routes/services'); // it seems that we have to start each required file as its own var
 var mqlService = require('../services/mql');
 var testService = require('../services/test');
-
 /*
- * SERVER - The Server used for shutdown etc
- * See: https://www.exratione.com/2011/07/running-a-nodejs-server-as-a-service-using-forever/
- */
+* SERVER - The Server used for shutdown etc
+* See: https://www.exratione.com/2011/07/running-a-nodejs-server-as-a-service-using-forever/
+*/
 var server = express();
 // Port
 if(typeof configs.server_port === 'undefined'){
@@ -50,52 +73,53 @@ console.log(server_prefix + " - Express server listening on port %d", server_por
 console.log(server_prefix + " - To shutdown server gracefully type: node prepareForStop.js");
 
 server.get('/prepareForShutdown', function(req, res) {
-  if(req.connection.remoteAddress == "127.0.0.1"
-    || req.socket.remoteAddress == "127.0.0.1"
-    // 0.4.7 oddity in https only
-    || req.connection.socket.remoteAddress == "127.0.0.1") 
-  {
-    managePreparationForShutdown(function() {
-      // don't complete the connection until the preparation is done.
-      res.statusCode = 200;
-      res.end();
-    });
-  } 
-  else {
-    res.statusCode = 500;
-    res.end();
-  }
+	if(req.connection.remoteAddress == "127.0.0.1"
+			|| req.socket.remoteAddress == "127.0.0.1"
+			// 0.4.7 oddity in https only
+			|| req.connection.socket.remoteAddress == "127.0.0.1")
+	{
+		managePreparationForShutdown(function() {
+			// don't complete the connection until the preparation is done.
+			res.statusCode = 200;
+			res.end();
+		});
+	}
+	else {
+		res.statusCode = 500;
+		res.end();
+	}
 });
-
+// Manage prepare for shutdown
 var managePreparationForShutdown = function(callback) {
-  // perform all the cleanup and other operations needed prior to shutdown,
-  // but do not actually shutdown. Call the callback function only when
-  // these operations are actually complete.
-  	try {
-		app.close();
+	// perform all the cleanup and other operations needed prior to shutdown,
+	// but do not actually shutdown. Call the callback function only when
+	// these operations are actually complete.
+	try {
+		app_server.close();
 		console.log(server_prefix + " - Shutdown app successful.");
 	}
 	catch(ex) {
 		console.log(server_prefix + " - Shutdown app failed.");
+		console.log(ex);
 	}
-  	try {
-		api.close();
+	try {
+		api_server.close();
 		console.log(server_prefix + " - Shutdown api successful.");
 	}
 	catch(ex) {
 		console.log(server_prefix + " - Shutdown api failed.");
-	} 
-  console.log(server_prefix + " - All preparations for shutdown completed.");
-  callback();
+		console.log(ex);
+	}
+	console.log(server_prefix + " - All preparations for shutdown completed.");
+	callback();
 };
-
 /*
- * APP - The Application
- */
+* APP - The Application
+*/
 var app = express();
 // Port
 if(typeof configs.app_port === 'undefined'){
-	var app_port = process.env.PORT || 5000;
+	var app_port = process.env.PORT || 2000;
 }
 else {
 	var app_port = configs.app_port;
@@ -122,12 +146,12 @@ else {
 	var app_list = configs.app_list;
 }
 /*
- * API- The Application Programming Interface
- */
+* API- The Application Programming Interface
+*/
 var api = express();
 // Port
 if(typeof configs.api_port === 'undefined'){
-	var api_port = app_port+1 || 5001;
+	var api_port = app_port+1 || 2001;
 }
 else {
 	var api_port = configs.api_port;
@@ -152,130 +176,135 @@ if(typeof configs.api_list === 'undefined'){
 }
 else {
 	var api_list = configs.api_list;
-} 
- 
+}
+
 /*
- * API DEVELOPMENT
- *
- * .bash_profile contains 
- * NODE_ENV=development
- *
- * or start server as follows
- * NODE_ENV=development node server.js
- *
- * on Windows use
- * set NODE_ENV=development
- * check with
- * echo %NODE_ENV% 
- */
-api.configure('development', function(){
+* API DEVELOPMENT
+*
+* .bash_profile contains
+* NODE_ENV=development
+*
+* or start server as follows
+* NODE_ENV=development node server.js
+*
+* on Windows use
+* set NODE_ENV=development
+* check with
+* echo %NODE_ENV%
+*/
+var env = process.env.NODE_ENV || 'development';
+if('development' == env) {
+	console.log(server_prefix + " - Using development configurations");
 	api.set('view engine', 'ejs');
-    api.set('view options', { layout: true });
+	api.set('view options', { layout: true });
 	api.set('views', __dirname + '/../public');
 	api.use(express.favicon());
 	api.use(express.logger('dev'));
-	
+
 	// https://github.com/senchalabs/connect/wiki/Connect-3.0
 	//api.use(express.bodyParser()); // DEPRECATED
 	api.use(express.urlencoded()); // NEW IN CONNECT 3.0
-	api.use(express.json()); // NEW IN CONNECT 3.0	
-	
+	api.use(express.json()); // NEW IN CONNECT 3.0
+
 	api.use(express.methodOverride());
-    api.use(express.cookieParser());
-    api.use(device.capture());		
+	api.use(express.cookieParser());
+	api.use(device.capture());
 	//  api.use(allowCrossDomain);
 	api.use(api.router);
 	api.use(express.errorHandler({ dumpExceptions: true, showStack: true })); // specific for development
-}); 
+};
 
 /*
- * API PRODUCTION
- *
- * .bash_profile contains
- * NODE_ENV=production
- *
- * or start server as follows
- * NODE_ENV=production node server.js
- *
- * on Windows use
- * set NODE_ENV=production
- * check with
- * echo %NODE_ENV% 
- */
-api.configure('production', function(){
+* API PRODUCTION
+*
+* .bash_profile contains
+* NODE_ENV=production
+*
+* or start server as follows
+* NODE_ENV=production node server.js
+*
+* on Windows use
+* set NODE_ENV=production
+* check with
+* echo %NODE_ENV%
+*/
+var env = process.env.NODE_ENV || 'production';
+if('production' == env) {
+	console.log(server_prefix + " - Using production configurations");
 	api.set('view engine', 'ejs');
-    api.set('view options', { layout: true });
+	api.set('view options', { layout: true });
 	api.set('views', __dirname + '/../public');
 	api.use(express.favicon());
 	api.use(express.logger('dev'));
-	
+
 	// https://github.com/senchalabs/connect/wiki/Connect-3.0
 	//api.use(express.bodyParser()); // DEPRECATED
 	api.use(express.urlencoded()); // NEW IN CONNECT 3.0
-	api.use(express.json()); // NEW IN CONNECT 3.0	
-	
+	api.use(express.json()); // NEW IN CONNECT 3.0
+
 	api.use(express.methodOverride());
-    api.use(express.cookieParser());
-    api.use(device.capture());		
+	api.use(express.cookieParser());
+	api.use(device.capture());
 	//  api.use(allowCrossDomain);
 	api.use(api.router);
 	api.use(express.errorHandler({ dumpExceptions: true, showStack: true })); // specific for production
-});
+};
 
 api.all('*', function(req, res, next){
-  if (!req.get('Origin')) return next();
-  // use "*" here to accept any origin
-  res.set('Access-Control-Allow-Origin', '*');  // Accepts requests coming from anyone, replace '*' by configs.allowedHosts to restrict it
-  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST');
-  res.set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type');
-  // res.set('Access-Control-Allow-Max-Age', 3600);
-  if ('OPTIONS' == req.method) return res.send(200);
-  next();
+	if (!req.get('Origin')) return next();
+	// use "*" here to accept any origin
+	res.set('Access-Control-Allow-Origin', '*');  // Accepts requests coming from anyone, replace '*' by configs.allowedHosts to restrict it
+	res.set('Access-Control-Allow-Methods', 'GET, PUT, POST');
+	res.set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type');
+	// res.set('Access-Control-Allow-Max-Age', 3600);
+	if ('OPTIONS' == req.method) return res.send(200);
+	next();
 });
 
 api.post('/login', function(req, res){
-  console.log(req.body);
-  res.send(201);
+	console.log(req.body);
+	res.send(201);
 });
 
 /*
- * APP DEVELOPMENT
- *
- * .bash_profile contains 
- * NODE_ENV=development
- *
- * or start server as follows
- * NODE_ENV=development node server.js
- *
- * on Windows use
- * set NODE_ENV=development
- * check with
- * echo %NODE_ENV% 
- */
-app.configure('development', function(){
-	//app.set('port', process.env.PORT || 5000);
+* APP DEVELOPMENT
+*
+* .bash_profile contains
+* NODE_ENV=development
+*
+* or start server as follows
+* NODE_ENV=development node server.js
+*
+* on Windows use
+* set NODE_ENV=development
+* check with
+* echo %NODE_ENV%
+*/
+var env = process.env.NODE_ENV || 'development';
+if('development' == env) {
+	//app.set('port', process.env.PORT || 2000);
 	app.set('view engine', 'ejs');
-    app.set('view options', { layout: true });
+	app.set('view options', { layout: true });
 	app.set('views', __dirname + '/../public');
-	
+
 	app.use(express.favicon());
 	app.use(express.logger('dev'));
-	
+
 	// https://github.com/senchalabs/connect/wiki/Connect-3.0
 	//app.use(express.bodyParser()); // DEPRECATED
 	app.use(express.urlencoded()); // NEW IN CONNECT 3.0
 	app.use(express.json()); // NEW IN CONNECT 3.0
-	
+
 	app.use(express.methodOverride());
-    app.use(express.cookieParser());
-    app.use(device.capture());	
+	app.use(express.cookieParser());
+	app.use(device.capture());
 	//  app.use(allowCrossDomain);
 	app.use(app.router);
-    app.use('/resources', express.static(__dirname + '/../public/resources'));
-    app.use('/app', express.static(__dirname + '/../public/app'));
-    app.use(express.static(__dirname + '/../public')); // Fall back to this as a last resort
+	app.use('/resources', express.static(__dirname + '/../public/resources'));
+	app.use('/app', express.static(__dirname + '/../public/app'));
+	app.use(express.static(__dirname + '/../public')); // Fall back to this as a last resort
 	app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); // specific for development
-});
+};
 
 
 
@@ -306,12 +335,14 @@ api.all('/services/test/read', testService.read);
 //
 api.all('/services/test/write', testService.write);
 
-
+/**
+* LISTEN
+*/
 app.listen(app_port, function () {
 	console.log(server_prefix + " - Express app server listening on port %d in %s mode", app_port, app.settings.env);
-	// launching as the root user 
-	// and then downgrading the process permissions 
-	// to run as another (non-privileged) user 
+	// launching as the root user
+	// and then downgrading the process permissions
+	// to run as another (non-privileged) user
 	// after the port is bound
 	// for better security
 	try {
@@ -332,9 +363,9 @@ app.listen(app_port, function () {
 
 api.listen(api_port, function () {
 	console.log(server_prefix + " - Express api server listening on port %d in %s mode", api_port, api.settings.env);
-	// launching as the root user 
-	// and then downgrading the process permissions 
-	// to run as another (non-privileged) user 
+	// launching as the root user
+	// and then downgrading the process permissions
+	// to run as another (non-privileged) user
 	// after the port is bound
 	// for better security
 	try {
